@@ -7,3 +7,8 @@ def getRangeHSV(self,BGR_color):
 
         lower_color=HSV_color[0][0][0]-10,100,100
         upper_color=HSV_color[0][0][0]+10,255,255
+
+        lower_color=np.array(lower_color,np.uint8)
+        upper_color=np.array(upper_color,np.uint8)
+
+        return lower_color,upper_color
