@@ -35,6 +35,7 @@ cv.resizeWindow("Ball Tracking",800,600)
 while True:
     ret,frame=videoCapture.read()
     
+    cv.imshow("Ball Tracking",frame)
     if not ret:
         break
     if cv.waitKey(1)&0xFF==ord('q'):
