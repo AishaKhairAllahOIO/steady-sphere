@@ -28,3 +28,17 @@ print("\nGreen color HSV range:")
 print("Lower bound:", lower_green)
 print("Upper bound:", upper_green)
 
+videoCapture=cv.VideoCapture(0)
+cv.namedWindow("Ball Tracking")
+cv.resizeWindow("Ball Tracking",800,600)
+
+while True:
+    ret,frame=videoCapture.read()
+    
+    if not ret:
+        break
+    if cv.waitKey(1)&0xFF==ord('q'):
+        break
+
+videoCapture.release()
+cv.destroyAllWindows()
