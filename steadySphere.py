@@ -37,6 +37,9 @@ while True:
     frame=cv.flip(frame,1)
     HSV_frame=cv.cvtColor(frame,cv.COLOR_BGR2HSV)
 
+    mask=cv.inRange(HSV_frame,lower_yellow,upper_yellow)
+
+
     cv.imshow("Ball Tracking",frame)
     if not ret:
         break
