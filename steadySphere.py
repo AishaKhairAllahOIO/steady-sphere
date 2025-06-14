@@ -34,7 +34,9 @@ cv.resizeWindow("Ball Tracking",800,600)
 
 while True:
     ret,frame=videoCapture.read()
-    
+    frame=cv.flip(frame,1)
+    HSV_frame=cv.cvtColor(frame,cv.COLOR_BGR2HSV)
+
     cv.imshow("Ball Tracking",frame)
     if not ret:
         break
