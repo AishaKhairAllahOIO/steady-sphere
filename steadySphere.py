@@ -12,3 +12,19 @@ def getRangeHSV(BGR_color):
         upper_color=np.array(upper_color,np.uint8)
 
         return lower_color,upper_color
+
+
+yellow=[0,255,255]
+green=[0,255,0]
+
+lower_yellow,upper_yellow=getRangeHSV(yellow)
+lower_green, upper_green =getRangeHSV(green)
+
+print("Yellow color HSV range:")
+print("Lower bound:", lower_yellow)
+print("Upper bound:", upper_yellow)
+
+print("\nGreen color HSV range:")
+print("Lower bound:", lower_green)
+print("Upper bound:", upper_green)
+
