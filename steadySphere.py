@@ -39,6 +39,10 @@ while True:
 
     mask=cv.inRange(HSV_frame,lower_yellow,upper_yellow)
     blurred=cv.GaussianBlur(mask,(9,9),0)
+    kernel=np.ones((5, 5),np.uint8)
+    mask_clean=cv.morphologyEx(blurred,cv.MORPH_OPEN,kernel)
+    mask_clean=cv.morphologyEx(mask_clean,cv.MORPH_CLOSE,kernel)
+
 
 
 
