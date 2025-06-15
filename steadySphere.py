@@ -42,6 +42,8 @@ while True:
     kernel=np.ones((5, 5),np.uint8)
     mask_clean=cv.morphologyEx(blurred,cv.MORPH_OPEN,kernel)
     mask_clean=cv.morphologyEx(mask_clean,cv.MORPH_CLOSE,kernel)
+    contours, _=cv.findContours(mask_clean,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE)
+
 
 
 
