@@ -38,6 +38,8 @@ while True:
     HSV_frame=cv.cvtColor(frame,cv.COLOR_BGR2HSV)
 
     mask=cv.inRange(HSV_frame,lower_yellow,upper_yellow)
+    blurred=cv.GaussianBlur(mask,(9,9),0)
+
 
 
     cv.imshow("Ball Tracking",frame)
