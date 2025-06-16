@@ -42,6 +42,8 @@ cv.resizeWindow("Ball Tracking",800,600)
 
 while True:
     ret,frame=videoCapture.read()
+    if not ret:
+        break
     frame=cv.flip(frame,1)
     HSV_frame=cv.cvtColor(frame,cv.COLOR_BGR2HSV)
 
@@ -70,8 +72,6 @@ while True:
 
 
     cv.imshow("Ball Tracking",frame)
-    if not ret:
-        break
     try:
         data=f"{ballCenter_X},{ballCenter_Y}\n"
         arduino.write(data.encode())   
