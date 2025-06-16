@@ -50,6 +50,10 @@ while True:
     if contours:
         largest_contour= max(contours,key=cv.contourArea)
         ((ballCenter_X,ballCenter_Y),radius)=cv.minEnclosingCircle(largest_contour)
+        M=cv.moments(largest_contour)
+        if M["m00"]>0:
+            ballCenter_X =int(M["m10"]/M["m00"])
+            ballCenter_Y=int(M["m01"]/M["m00"])
 
 
 
