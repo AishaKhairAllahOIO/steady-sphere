@@ -1,5 +1,10 @@
 import cv2 as cv
 import numpy as np
+import serial
+import time
+
+arduino=serial.Serial('COM5',9600)
+time.sleep(2)
 
 ballCenter_X=0
 ballCenter_Y=0
