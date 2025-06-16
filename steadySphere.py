@@ -1,6 +1,9 @@
 import cv2 as cv
 import numpy as np
 
+ballCenter_X=0
+ballCenter_Y=0
+
 def getRangeHSV(BGR_color):
         BGR_color=np.uint8([[BGR_color]])
         HSV_color=cv.cvtColor(BGR_color,cv.COLOR_BGR2HSV)
@@ -43,7 +46,7 @@ while True:
     mask_clean=cv.morphologyEx(blurred,cv.MORPH_OPEN,kernel)
     mask_clean=cv.morphologyEx(mask_clean,cv.MORPH_CLOSE,kernel)
     contours, _=cv.findContours(mask_clean,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE)
-
+    
 
 
 
