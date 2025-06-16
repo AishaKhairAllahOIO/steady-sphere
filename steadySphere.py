@@ -72,8 +72,16 @@ while True:
     cv.imshow("Ball Tracking",frame)
     if not ret:
         break
+    try:
+        data=f"{ballCenter_X},{ballCenter_Y}\n"
+        arduino.write(data.encode())   
+        response=arduino.readline().decode().strip()
+        print("Arduino: ",response)                          
+    except Exception as e:
+        print("Error sending data:",e)   
     if cv.waitKey(1)&0xFF==ord('q'):
         break
 
 videoCapture.release()
+arduino.close()
 cv.destroyAllWindows()
