@@ -47,10 +47,9 @@ while True:
     mask_clean=cv.morphologyEx(mask_clean,cv.MORPH_CLOSE,kernel)
     contours, _=cv.findContours(mask_clean,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE)
 
-    largest_contour= max(contours,key=cv.contourArea)
-    ((ballCenter_X,ballCenter_Y),radius)=cv.minEnclosingCircle(largest_contour)
-
-    
+    if contours:
+        largest_contour= max(contours,key=cv.contourArea)
+        ((ballCenter_X,ballCenter_Y),radius)=cv.minEnclosingCircle(largest_contour)
 
 
 
