@@ -54,8 +54,14 @@ while True:
         if M["m00"]>0:
             ballCenter_X =int(M["m10"]/M["m00"])
             ballCenter_Y=int(M["m01"]/M["m00"])
+            if radius>10:
+                cv.circle(frame,(int(ballCenter_X),int(ballCenter_Y)),int(radius),(0, 255, 0),4)
+                cv.circle(frame,(ballCenter_X,ballCenter_Y),5,(0,0,255),-1)
+                cv.putText(frame, f"X: {int(ballCenter_X)}, Y: {int(ballCenter_Y)}",(10,30),cv.FONT_HERSHEY_SIMPLEX,0.7,(0,0,0),2)
 
-
+                cv.line(frame,(ballCenter_X, 0),(ballCenter_X,frame.shape[0]),(255,0,0),2) 
+                cv.line(frame,(0,ballCenter_Y),(frame.shape[1],ballCenter_Y),(255,0,0),2) 
+                cv.circle(frame,(ballCenter_X,ballCenter_Y),5,(255,0,0),-1)
 
 
     cv.imshow("Ball Tracking",frame)
