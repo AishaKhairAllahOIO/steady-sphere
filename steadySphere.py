@@ -3,6 +3,26 @@ import numpy as np
 import serial
 import time
 
+class PID:
+    def __init__(self,Kp,Ki,Kd):
+        self.Kp=Kp
+        self.Ki=Ki
+        self.Kd=Kd
+        self.integral=0
+        self.previous_error=0
+        self.last_time=time.time()
+
+    def PIDcompute(self,current_error):
+        current_time=time.time()
+        dt=current_time-self.last_time if self.last_time else 0
+        self.last_time=current_time
+
+        self.integral +=current_error*dt
+        derivative=(current_error-self.previous_error)/ dt if dt>0 else 0
+        output=self.Kp*current_error+self.Ki*self.integral+self.Kd*derivative
+        self.previous_error=current_error
+        return output
+
 # arduino=serial.Serial('COM7',9600)
 # time.sleep(2)
 
