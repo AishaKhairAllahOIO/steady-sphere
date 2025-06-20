@@ -40,16 +40,7 @@ videoCapture=cv.VideoCapture(0)
 cv.namedWindow("Ball Tracking")
 cv.resizeWindow("Ball Tracking",800,600)
 
-while True:
-    ret,frame=videoCapture.read()
-    if not ret:
-        break
-    frame=cv.flip(frame,1)
-    HSV_frame=cv.cvtColor(frame,cv.COLOR_BGR2HSV)
-    h,s,v=cv.split(HSV_frame)
-    v_eq=cv.equalizeHist(v)
-    HSV_frame=cv.merge([h,s,v_eq])
-
+def ballTracker(frame, HSV_frame):
     mask=cv.inRange(HSV_frame,lower_yellow,upper_yellow)
     blurred=cv.bilateralFilter(mask,9,75,75)
     kernel=cv.getStructuringElement(cv.MORPH_ELLIPSE,(7,7))
@@ -94,8 +85,21 @@ while True:
                 print("ballCenter X=",ballCenter_X)    
                 print("ballCenter Y=",ballCenter_Y)    
                 print("Radius=",radius,"\n")
+    return mask_clean            
 
+    
 
+while True:
+    ret,frame=videoCapture.read()
+    if not ret:
+        break
+    frame=cv.flip(frame,1)
+    HSV_frame=cv.cvtColor(frame,cv.COLOR_BGR2HSV)
+    h,s,v=cv.split(HSV_frame)
+    v_eq=cv.equalizeHist(v)
+    HSV_frame=cv.merge([h,s,v_eq])
+
+    mask_clean=ballTracker(frame, HSV_frame)
     mask_color=cv.cvtColor(mask_clean,cv.COLOR_GRAY2BGR)
     mergeframe=np.hstack((frame,mask_color))
 
