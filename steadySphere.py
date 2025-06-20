@@ -103,7 +103,8 @@ def ballTracker(frame, HSV_frame):
                 print("ballCenter X=",ballCenter_X)    
                 print("ballCenter Y=",ballCenter_Y)    
                 print("Radius=",radius,"\n")
-    return mask_clean            
+            return mask_clean, ballCenter_X, ballCenter_Y
+        return mask_clean, None, None    
 
 def platformTracker(frame,HSV_frame):
     mask=cv.inRange(HSV_frame,lower_green,upper_green)
@@ -139,8 +140,8 @@ def platformTracker(frame,HSV_frame):
                 cv.putText(frame, f"X={platform_X}, Y={platform_Y}",(text_x, text_y),cv.FONT_HERSHEY_SIMPLEX,0.6,(64,64,64),2)
                 print("platform X=",platform_X)    
                 print("platform Y=",platform_Y,"\n")    
-    return mask_clean
-
+        return mask_clean, platform_X, platform_Y
+    return mask_clean, None, None
     
 videoCapture.set(cv.CAP_PROP_FRAME_WIDTH,640)
 videoCapture.set(cv.CAP_PROP_FRAME_HEIGHT,480)
@@ -159,12 +160,13 @@ while True:
     v_eq=cv.equalizeHist(v)
     HSV_frame=cv.merge([h,s,v_eq])
 
-    mask_clean=ballTracker(frame, HSV_frame)
-    _=platformTracker(frame, HSV_frame)
+    mask_clean,ballCenter_X,ballCenter_Y=ballTracker(frame,HSV_frame)
+    mask_clean_platform,platform_X,platform_Y=platformTracker(frame,HSV_frame)
     mask_color=cv.cvtColor(mask_clean,cv.COLOR_GRAY2BGR)
     mergeframe=np.hstack((frame,mask_color))
 
     cv.imshow("Ball Tracking",mergeframe)
+
 
     # try:
     #     data=f"{ballCenter_X},{ballCenter_Y}\n"
