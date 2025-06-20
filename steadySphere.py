@@ -76,18 +76,28 @@ while True:
             if M["m00"]>0:
                 ballCenter_X =int(M["m10"]/M["m00"])
                 ballCenter_Y=int(M["m01"]/M["m00"])
-                if radius>10:
-                    cv.circle(frame,(int(ballCenter_X),int(ballCenter_Y)),int(radius),(0, 255, 0),4)
+                if radius > 10:
+                    cv.circle(frame,(int(ballCenter_X),int(ballCenter_Y)),int(radius),(0, 0, 255),4)
+
+                    text_size,_=cv.getTextSize(f"X={int(ballCenter_X)}, Y={int(ballCenter_Y)}",cv.FONT_HERSHEY_SIMPLEX,0.6,2)
+
+                    text_x=ballCenter_X+10
+                    text_y=ballCenter_Y-10
+                    rect_start=(text_x-5,text_y-text_size[1]-5)
+                    rect_end=(text_x+text_size[0]+5,text_y+5)
+                    cv.rectangle(frame, rect_start, rect_end, (0, 128, 255), -1)
+
+                    cv.putText(frame,f"X={int(ballCenter_X)}, Y={int(ballCenter_Y)}",(text_x, text_y),cv.FONT_HERSHEY_SIMPLEX,0.6,(255, 255, 255),2)
+                    cv.line(frame,(ballCenter_X,0),(ballCenter_X,frame.shape[0]),(0,128,255),2)
+                    cv.line(frame,(0,ballCenter_Y),(frame.shape[1], ballCenter_Y),(0,128,255),2)
                     cv.circle(frame,(ballCenter_X,ballCenter_Y),5,(0,0,255),-1)
-                    cv.putText(frame, f"X: {int(ballCenter_X)}, Y: {int(ballCenter_Y)}",(10,30),cv.FONT_HERSHEY_SIMPLEX,0.7,(0,0,0),2)
-
-                    cv.line(frame,(ballCenter_X, 0),(ballCenter_X,frame.shape[0]),(255,0,0),2) 
-                    cv.line(frame,(0,ballCenter_Y),(frame.shape[1],ballCenter_Y),(255,0,0),2) 
-                    cv.circle(frame,(ballCenter_X,ballCenter_Y),5,(255,0,0),-1)
 
 
-    cv.imshow("Ball Tracking",frame)
-    cv.imshow("mask",mask_clean)
+    mask_color=cv.cvtColor(mask_clean,cv.COLOR_GRAY2BGR)
+    mergeframe=np.hstack((frame,mask_color))
+
+    cv.imshow("Ball Tracking",mergeframe)
+
     # try:
     #     data=f"{ballCenter_X},{ballCenter_Y}\n"
     #     arduino.write(data.encode())   
