@@ -145,6 +145,10 @@ def platformTracker(frame,HSV_frame):
 videoCapture.set(cv.CAP_PROP_FRAME_WIDTH,640)
 videoCapture.set(cv.CAP_PROP_FRAME_HEIGHT,480)
 
+pid_x=PID(Kp=0,Ki=0,Kd=0)
+pid_y=PID(Kp=0,Ki=0,Kd=0)
+
+
 while True:
     ret,frame=videoCapture.read()
     if not ret:
