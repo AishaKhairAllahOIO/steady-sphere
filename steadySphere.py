@@ -40,8 +40,6 @@ print("Lower bound:", lower_green)
 print("Upper bound:", upper_green)
 
 videoCapture=cv.VideoCapture(0)
-cv.namedWindow("Ball Tracking")
-cv.resizeWindow("Ball Tracking",800,600)
 
 def ballTracker(frame, HSV_frame):
     mask=cv.inRange(HSV_frame,lower_yellow,upper_yellow)
@@ -119,6 +117,8 @@ def platformTracker(frame,HSV_frame):
 
                 cv.rectangle(frame,(text_x-5,text_y-text_size[1]-5),(text_x+text_size[0]+5,text_y+5),(192,192,192),-1)
                 cv.putText(frame, f"X={platform_X}, Y={platform_Y}",(text_x, text_y),cv.FONT_HERSHEY_SIMPLEX,0.6,(64,64,64),2)
+                print("platform X=",platform_X)    
+                print("platform Y=",platform_Y,"\n")    
     return mask_clean
 
     
