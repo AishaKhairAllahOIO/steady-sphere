@@ -3,8 +3,8 @@ import numpy as np
 import serial
 import time
 
-arduino=serial.Serial('COM5',9600)
-time.sleep(2)
+# arduino=serial.Serial('COM7',9600)
+# time.sleep(2)
 
 ballCenter_X=0
 ballCenter_Y=0
@@ -48,7 +48,7 @@ while True:
     HSV_frame=cv.cvtColor(frame,cv.COLOR_BGR2HSV)
 
     mask=cv.inRange(HSV_frame,lower_yellow,upper_yellow)
-    blurred=cv.GaussianBlur(mask,(9,9),0)
+    blurred = cv.bilateralFilter(mask,9,75,75)
     kernel=np.ones((5, 5),np.uint8)
     mask_clean=cv.morphologyEx(blurred,cv.MORPH_OPEN,kernel)
     mask_clean=cv.morphologyEx(mask_clean,cv.MORPH_CLOSE,kernel)
@@ -72,16 +72,17 @@ while True:
 
 
     cv.imshow("Ball Tracking",frame)
-    try:
-        data=f"{ballCenter_X},{ballCenter_Y}\n"
-        arduino.write(data.encode())   
-        response=arduino.readline().decode().strip()
-        print("Arduino: ",response)                          
-    except Exception as e:
-        print("Error sending data:",e)   
+    cv.imshow("mask",mask_clean)
+    # try:
+    #     data=f"{ballCenter_X},{ballCenter_Y}\n"
+    #     arduino.write(data.encode())   
+    #     response=arduino.readline().decode().strip()
+    #     print("Arduino: ",response)                          
+    # except Exception as e:
+    #     print("Error sending data:",e)   
     if cv.waitKey(1)&0xFF==ord('q'):
         break
 
 videoCapture.release()
-arduino.close()
+# arduino.close()
 cv.destroyAllWindows()
