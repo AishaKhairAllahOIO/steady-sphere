@@ -46,6 +46,9 @@ while True:
         break
     frame=cv.flip(frame,1)
     HSV_frame=cv.cvtColor(frame,cv.COLOR_BGR2HSV)
+    h,s,v=cv.split(HSV_frame)
+    v_eq=cv.equalizeHist(v)
+    HSV_frame=cv.merge([h,s,v_eq])
 
     mask=cv.inRange(HSV_frame,lower_yellow,upper_yellow)
     blurred=cv.bilateralFilter(mask,9,75,75)
