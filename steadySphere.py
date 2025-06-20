@@ -48,8 +48,8 @@ while True:
     HSV_frame=cv.cvtColor(frame,cv.COLOR_BGR2HSV)
 
     mask=cv.inRange(HSV_frame,lower_yellow,upper_yellow)
-    blurred = cv.bilateralFilter(mask,9,75,75)
-    kernel=np.ones((5, 5),np.uint8)
+    blurred=cv.bilateralFilter(mask,9,75,75)
+    kernel=cv.getStructuringElement(cv.MORPH_ELLIPSE,(7,7))
     mask_clean=cv.morphologyEx(blurred,cv.MORPH_OPEN,kernel)
     mask_clean=cv.morphologyEx(mask_clean,cv.MORPH_CLOSE,kernel)
     contours, _=cv.findContours(mask_clean,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE)
