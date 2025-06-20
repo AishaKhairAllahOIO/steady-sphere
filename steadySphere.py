@@ -57,7 +57,7 @@ def ballTracker(frame, HSV_frame):
             if perimeter==0:
                 continue
             circularity=4*np.pi*area/(perimeter**2)
-            if circularity>0.7 and area>300: 
+            if circularity>0.5 and area>300: 
                 if area>max_score:
                     max_score=area
                     best_contour=contour
@@ -88,6 +88,8 @@ def ballTracker(frame, HSV_frame):
     return mask_clean            
 
     
+videoCapture.set(cv.CAP_PROP_FRAME_WIDTH,640)
+videoCapture.set(cv.CAP_PROP_FRAME_HEIGHT,480)
 
 while True:
     ret,frame=videoCapture.read()
