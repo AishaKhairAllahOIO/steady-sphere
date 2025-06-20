@@ -9,6 +9,9 @@ import time
 ballCenter_X=0
 ballCenter_Y=0
 
+platform_X=0
+platform_Y=0
+
 def getRangeHSV(BGR_color):
         BGR_color=np.uint8([[BGR_color]])
         HSV_color=cv.cvtColor(BGR_color,cv.COLOR_BGR2HSV)
@@ -69,15 +72,12 @@ def ballTracker(frame, HSV_frame):
                 ballCenter_Y=int(M["m01"]/M["m00"])
                 if radius > 10:
                     cv.circle(frame,(int(ballCenter_X),int(ballCenter_Y)),int(radius),(0, 0, 255),4)
-
                     text_size,_=cv.getTextSize(f"X={int(ballCenter_X)}, Y={int(ballCenter_Y)}",cv.FONT_HERSHEY_SIMPLEX,0.6,2)
-
                     text_x=ballCenter_X+10
                     text_y=ballCenter_Y-10
                     rect_start=(text_x-5,text_y-text_size[1]-5)
                     rect_end=(text_x+text_size[0]+5,text_y+5)
                     cv.rectangle(frame, rect_start, rect_end, (0, 128, 255), -1)
-
                     cv.putText(frame,f"X={int(ballCenter_X)}, Y={int(ballCenter_Y)}",(text_x, text_y),cv.FONT_HERSHEY_SIMPLEX,0.6,(255, 255, 255),2)
                     cv.line(frame,(ballCenter_X,0),(ballCenter_X,frame.shape[0]),(0,128,255),2)
                     cv.line(frame,(0,ballCenter_Y),(frame.shape[1], ballCenter_Y),(0,128,255),2)
@@ -86,6 +86,40 @@ def ballTracker(frame, HSV_frame):
                 print("ballCenter Y=",ballCenter_Y)    
                 print("Radius=",radius,"\n")
     return mask_clean            
+
+def platformTracker(frame,HSV_frame):
+    mask=cv.inRange(HSV_frame,lower_green,upper_green)
+    blurred=cv.bilateralFilter(mask,9,75,75)
+    kernel=cv.getStructuringElement(cv.MORPH_RECT,(7,7))
+    mask_clean=cv.morphologyEx(blurred,cv.MORPH_OPEN,kernel)
+    mask_clean=cv.morphologyEx(mask_clean,cv.MORPH_CLOSE,kernel)
+    contours,_=cv.findContours(mask_clean,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE)
+
+    if contours:
+        best_contour=max(contours,key=cv.contourArea)
+        area=cv.contourArea(best_contour)
+        if area>1000:
+            rect=cv.minAreaRect(best_contour)
+            box=cv.boxPoints(rect)
+            box=np.int32(box)
+
+            M=cv.moments(best_contour)
+            if M["m00"]>0:
+                platform_X=int(M["m10"]/M["m00"])
+                platform_Y=int(M["m01"]/M["m00"])
+
+                cv.drawContours(frame,[box],0,(0,0,0),4)
+                cv.line(frame,(platform_X,0),(platform_X,frame.shape[0]),(128,128,128),2)
+                cv.line(frame,(0,platform_Y),(frame.shape[1],platform_Y),(128,128,128),2)
+                cv.circle(frame,(platform_X,platform_Y),5,(0,0,0),-1)
+
+                text_size,_=cv.getTextSize( f"X={platform_X}, Y={platform_Y}",cv.FONT_HERSHEY_SIMPLEX,0.6,2)
+                text_x=platform_X+10
+                text_y=platform_Y+10
+
+                cv.rectangle(frame,(text_x-5,text_y-text_size[1]-5),(text_x+text_size[0]+5,text_y+5),(192,192,192),-1)
+                cv.putText(frame, f"X={platform_X}, Y={platform_Y}",(text_x, text_y),cv.FONT_HERSHEY_SIMPLEX,0.6,(64,64,64),2)
+    return mask_clean
 
     
 videoCapture.set(cv.CAP_PROP_FRAME_WIDTH,640)
@@ -102,6 +136,7 @@ while True:
     HSV_frame=cv.merge([h,s,v_eq])
 
     mask_clean=ballTracker(frame, HSV_frame)
+    _=platformTracker(frame, HSV_frame)
     mask_color=cv.cvtColor(mask_clean,cv.COLOR_GRAY2BGR)
     mergeframe=np.hstack((frame,mask_color))
 
