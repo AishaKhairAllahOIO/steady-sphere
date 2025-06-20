@@ -91,6 +91,9 @@ while True:
                     cv.line(frame,(ballCenter_X,0),(ballCenter_X,frame.shape[0]),(0,128,255),2)
                     cv.line(frame,(0,ballCenter_Y),(frame.shape[1], ballCenter_Y),(0,128,255),2)
                     cv.circle(frame,(ballCenter_X,ballCenter_Y),5,(0,0,255),-1)
+                print("ballCenter X=",ballCenter_X)    
+                print("ballCenter Y=",ballCenter_Y)    
+                print("Radius=",radius,"\n")
 
 
     mask_color=cv.cvtColor(mask_clean,cv.COLOR_GRAY2BGR)
