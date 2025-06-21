@@ -143,6 +143,13 @@ pid_x=PID(Kp=0,Ki=0,Kd=0)
 pid_y=PID(Kp=0,Ki=0,Kd=0)
 
 
+def mapPIDtoPWM(output):
+    output=max(min(output,100),-100)
+    pwm=1500+output*3
+    pwm=int(max(min(pwm,1800), 1200))
+    return pwm
+
+
 while True:
     ret,frame=videoCapture.read()
     if not ret:
