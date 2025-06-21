@@ -159,7 +159,18 @@ while True:
     print("Radius=",radius,"\n")
     mask_clean_platform,platform_X,platform_Y=platformTracker(frame,HSV_frame)
     print("platform X=",platform_X)    
-    print("platform Y=",platform_Y,"\n")    
+    print("platform Y=",platform_Y,"\n")
+
+    if ballCenter_X is not None and platform_X is not None:
+        error_x=platform_X- ballCenter_X 
+        print("Error X=",error_x)
+
+    if ballCenter_Y is not None and platform_Y is not None:
+        error_y=platform_Y-ballCenter_Y
+        print("Error Y=",error_y)
+
+
+
     mask_color=cv.cvtColor(mask_clean,cv.COLOR_GRAY2BGR)
     mergeframe=np.hstack((frame,mask_color))
 
