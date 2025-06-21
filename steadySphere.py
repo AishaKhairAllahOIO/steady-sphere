@@ -26,12 +26,6 @@ class PID:
 # arduino=serial.Serial('COM7',9600)
 # time.sleep(2)
 
-ballCenter_X=0
-ballCenter_Y=0
-
-platform_X=0
-platform_Y=0
-
 def getRangeHSV(BGR_color):
         BGR_color=np.uint8([[BGR_color]])
         HSV_color=cv.cvtColor(BGR_color,cv.COLOR_BGR2HSV)
@@ -62,6 +56,7 @@ print("Upper bound:", upper_green)
 videoCapture=cv.VideoCapture(0)
 
 def ballTracker(frame, HSV_frame):
+    ballCenter_X,ballCenter_Y=None,None
     mask=cv.inRange(HSV_frame,lower_yellow,upper_yellow)
     blurred=cv.bilateralFilter(mask,9,75,75)
     kernel=cv.getStructuringElement(cv.MORPH_ELLIPSE,(7,7))
@@ -100,13 +95,12 @@ def ballTracker(frame, HSV_frame):
                     cv.line(frame,(ballCenter_X,0),(ballCenter_X,frame.shape[0]),(0,128,255),2)
                     cv.line(frame,(0,ballCenter_Y),(frame.shape[1], ballCenter_Y),(0,128,255),2)
                     cv.circle(frame,(ballCenter_X,ballCenter_Y),5,(0,0,255),-1)
-                print("ballCenter X=",ballCenter_X)    
-                print("ballCenter Y=",ballCenter_Y)    
-                print("Radius=",radius,"\n")
-            return mask_clean, ballCenter_X, ballCenter_Y
-        return mask_clean, None, None    
+               
+                return mask_clean, ballCenter_X, ballCenter_Y,radius
+    return mask_clean, None, None,None    
 
 def platformTracker(frame,HSV_frame):
+    platform_X,platform_Y=None,None
     mask=cv.inRange(HSV_frame,lower_green,upper_green)
     blurred=cv.bilateralFilter(mask,9,75,75)
     kernel=cv.getStructuringElement(cv.MORPH_RECT,(7,7))
@@ -138,9 +132,8 @@ def platformTracker(frame,HSV_frame):
 
                 cv.rectangle(frame,(text_x-5,text_y-text_size[1]-5),(text_x+text_size[0]+5,text_y+5),(192,192,192),-1)
                 cv.putText(frame, f"X={platform_X}, Y={platform_Y}",(text_x, text_y),cv.FONT_HERSHEY_SIMPLEX,0.6,(64,64,64),2)
-                print("platform X=",platform_X)    
-                print("platform Y=",platform_Y,"\n")    
-        return mask_clean, platform_X, platform_Y
+               
+                return mask_clean, platform_X, platform_Y
     return mask_clean, None, None
     
 videoCapture.set(cv.CAP_PROP_FRAME_WIDTH,640)
@@ -160,8 +153,13 @@ while True:
     v_eq=cv.equalizeHist(v)
     HSV_frame=cv.merge([h,s,v_eq])
 
-    mask_clean,ballCenter_X,ballCenter_Y=ballTracker(frame,HSV_frame)
+    mask_clean,ballCenter_X,ballCenter_Y,radius=ballTracker(frame,HSV_frame)
+    print("ballCenter X=",ballCenter_X)    
+    print("ballCenter Y=",ballCenter_Y)    
+    print("Radius=",radius,"\n")
     mask_clean_platform,platform_X,platform_Y=platformTracker(frame,HSV_frame)
+    print("platform X=",platform_X)    
+    print("platform Y=",platform_Y,"\n")    
     mask_color=cv.cvtColor(mask_clean,cv.COLOR_GRAY2BGR)
     mergeframe=np.hstack((frame,mask_color))
 
