@@ -164,10 +164,14 @@ while True:
     if ballCenter_X is not None and platform_X is not None:
         error_x=platform_X- ballCenter_X 
         print("Error X=",error_x)
+        output_x=pid_x.PIDcompute(error_x)
+
 
     if ballCenter_Y is not None and platform_Y is not None:
         error_y=platform_Y-ballCenter_Y
         print("Error Y=",error_y)
+        output_y=pid_y.PIDcompute(error_y)
+
 
 
 
