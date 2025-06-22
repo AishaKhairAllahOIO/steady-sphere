@@ -151,8 +151,8 @@ pid_y=PID(Kp=0,Ki=0,Kd=0)
 
 def mapPIDtoPWM(output):
     output=max(min(output,100),-100)
-    pwm=1500+output*3
-    pwm=int(max(min(pwm,1800), 1200))
+    pwm=1550+output*0.5
+    pwm=int(max(min(pwm,1575),1500))
     return pwm
 
 
@@ -188,7 +188,8 @@ while True:
             print("X Dead Zone - No correction needed.")
         else:
             output_x = pid_x.PIDcompute(error_x)
-            pwm_x=mapPIDtoPWM(output_x)
+
+        pwm_x=mapPIDtoPWM(output_x)
 
 
     if ballCenter_Y is not None and platform_Y is not None:
@@ -199,7 +200,8 @@ while True:
             print("Y Dead Zone - No correction needed.")
         else:
             output_y = pid_y.PIDcompute(error_y)
-            pwm_y=mapPIDtoPWM(output_y)
+
+        pwm_y=mapPIDtoPWM(output_y)
 
 
 
