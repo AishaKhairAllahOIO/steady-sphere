@@ -3,9 +3,12 @@ import numpy as np
 import serial
 import time
 from playsound import playsound
+import threading
+
 
 sound_played = False
-
+def play_sound():
+    playsound("C:/Users/ASUS/steady-sphere/sound/sound.mp3")
 class PID:
     def __init__(self,Kp,Ki,Kd):
         self.Kp=Kp
@@ -43,7 +46,7 @@ def getRangeHSV(BGR_color):
 
 
 yellow=[0,255,255]
-green=[112,141,42]
+green=[0,255,0]#112,141,42
 
 lower_yellow,upper_yellow=getRangeHSV(yellow)
 lower_green, upper_green =getRangeHSV(green)
@@ -171,6 +174,11 @@ while True:
     print("platform X=",platform_X)    
     print("platform Y=",platform_Y,"\n")
 
+    if ballCenter_X is not None and ballCenter_Y is not None and not sound_played: 
+        threading.Thread(target=play_sound,daemon=True).start()
+        sound_played = True
+
+
 
     if ballCenter_X is not None and platform_X is not None:
         error_x=platform_X- ballCenter_X 
@@ -192,10 +200,7 @@ while True:
         else:
             output_y = pid_y.PIDcompute(error_y)
             pwm_y=mapPIDtoPWM(output_y)
-            
-    if ballCenter_X is not None and ballCenter_Y is not None and not sound_played: 
-        playsound("C:/Users/ASUS/steady-sphere/sound/sound.mp3")
-        sound_played = True
+
 
 
     mask_color=cv.cvtColor(mask_clean,cv.COLOR_GRAY2BGR)
