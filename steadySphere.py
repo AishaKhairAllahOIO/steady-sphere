@@ -2,6 +2,9 @@ import cv2 as cv
 import numpy as np
 import serial
 import time
+from playsound import playsound
+
+sound_played = False
 
 class PID:
     def __init__(self,Kp,Ki,Kd):
@@ -23,7 +26,7 @@ class PID:
         self.previous_error=current_error
         return output
 
-# arduino=serial.Serial('COM7',9600)
+# arduino=serial.Serial('COM8',9600)
 # time.sleep(2)
 
 def getRangeHSV(BGR_color):
@@ -40,7 +43,7 @@ def getRangeHSV(BGR_color):
 
 
 yellow=[0,255,255]
-green=[0,255,0]
+green=[112,141,42]
 
 lower_yellow,upper_yellow=getRangeHSV(yellow)
 lower_green, upper_green =getRangeHSV(green)
@@ -168,6 +171,7 @@ while True:
     print("platform X=",platform_X)    
     print("platform Y=",platform_Y,"\n")
 
+
     if ballCenter_X is not None and platform_X is not None:
         error_x=platform_X- ballCenter_X 
         print("Error X=",error_x)
@@ -188,6 +192,11 @@ while True:
         else:
             output_y = pid_y.PIDcompute(error_y)
             pwm_y=mapPIDtoPWM(output_y)
+            
+    if ballCenter_X is not None and ballCenter_Y is not None and not sound_played: 
+        playsound("C:/Users/ASUS/steady-sphere/sound/sound.mp3")
+        sound_played = True
+
 
     mask_color=cv.cvtColor(mask_clean,cv.COLOR_GRAY2BGR)
     mergeframe=np.hstack((frame,mask_color))
