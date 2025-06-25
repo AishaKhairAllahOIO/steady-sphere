@@ -233,6 +233,34 @@ while True:
    
     if key==ord('q'):
         break
+    elif key==ord('w'):  
+        pid_x.Kp += 0.01
+        pid_y.Kp += 0.01
+        print(f"Kp = {pid_x.Kp:.3f}")
+    elif key==ord('s'):  
+        pid_x.Kp = max(pid_x.Kp - 0.01, 0)
+        pid_y.Kp = pid_x.Kp
+        print(f"Kp = {pid_x.Kp:.3f}")
+    elif key==ord('e'):  
+        pid_x.Ki += 0.001
+        pid_y.Ki += 0.001
+        print(f"Ki = {pid_x.Ki:.4f}")
+    elif key==ord('d'):  
+        pid_x.Ki = max(pid_x.Ki - 0.001, 0)
+        pid_y.Ki = pid_x.Ki
+        print(f"Ki = {pid_x.Ki:.4f}")
+    elif key==ord('r'): 
+        pid_x.Kd += 0.01
+        pid_y.Kd += 0.01
+        print(f"Kd = {pid_x.Kd:.3f}")
+    elif key==ord('f'): 
+        pid_x.Kd = max(pid_x.Kd - 0.01, 0)
+        pid_y.Kd = pid_x.Kd
+        print(f"Kd = {pid_x.Kd:.3f}")
+    elif key==ord('p'): 
+        with open("pid_params.txt", "w") as file:
+            file.write(f"{pid_x.Kp},{pid_x.Ki},{pid_x.Kd}")
+        print("PID values saved to pid_params.txt ")
 
 videoCapture.release()
 #arduino.close()
