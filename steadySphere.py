@@ -2,8 +2,8 @@ import cv2 as cv
 import numpy as np
 import serial
 import time
-from playsound import playsound
 import threading
+from playsound import playsound
 
 sound_played=False
 
@@ -25,13 +25,13 @@ class PID:
         self.last_time=current_time
 
         self.integral +=current_error*dt
-        derivative=(current_error-self.previous_error)/ dt if dt>0 else 0
+        derivative=(current_error-self.previous_error)/dt if dt>0 else 0
         output=self.Kp*current_error+self.Ki*self.integral+self.Kd*derivative
         self.previous_error=current_error
         return output
 
 #arduino=serial.Serial('COM8',9600)
-time.sleep(2)
+#time.sleep(2)
 
 def getRangeHSV(BGR_color):
         BGR_color=np.uint8([[BGR_color]])
@@ -45,20 +45,20 @@ def getRangeHSV(BGR_color):
 
         return lower_color,upper_color
 
-
 yellow=[0,255,255]
 green=[112,141,42]
 
 lower_yellow,upper_yellow=getRangeHSV(yellow)
 lower_green, upper_green =getRangeHSV(green)
 
+print("color tracking in HSV:\n")
 print("Yellow color HSV range:")
-print("Lower bound:", lower_yellow)
-print("Upper bound:", upper_yellow)
+print("Lower Yellow:",lower_yellow)
+print("Upper Yellow:",upper_yellow)
 
 print("\nGreen color HSV range:")
-print("Lower bound:", lower_green)
-print("Upper bound:", upper_green)
+print("Lower Green:",lower_green)
+print("Upper Green:",upper_green)
 
 videoCapture=cv.VideoCapture(0)
 
@@ -146,18 +146,17 @@ def platformTracker(frame,HSV_frame):
 videoCapture.set(cv.CAP_PROP_FRAME_WIDTH,640)
 videoCapture.set(cv.CAP_PROP_FRAME_HEIGHT,480)
 
-pid_x = PID(Kp=0, Ki=0, Kd=0)
-pid_y = PID(Kp=0, Ki=0, Kd=0)
+pid_x=PID(Kp=0,Ki=0,Kd=0)
+pid_y=PID(Kp=0,Ki=0,Kd=0)
 
-def mapPIDtoAngle(output):
-    output=max(min(output,100),-100)
-    angle=90+output*0.9
+def mapPIDtoAngle(PIDoutput):
+    PIDoutput=max(min(PIDoutput,100),-100)
+    angle=90+PIDoutput*0.9
     return angle
 
 platform_center_locked=False
 saved_platform_X=None
 saved_platform_Y=None
-
 
 while True:
     ret,frame=videoCapture.read()
@@ -169,27 +168,27 @@ while True:
     v_eq=cv.equalizeHist(v)
     HSV_frame=cv.merge([h,s,v_eq])
 
-    mask_clean,ballCenter_X,ballCenter_Y,radius=ballTracker(frame,HSV_frame)
-    print("ballCenter X=",ballCenter_X)    
-    print("ballCenter Y=",ballCenter_Y)    
-    print("Radius=",radius,"\n")
-
     if not platform_center_locked:
         mask_clean, platform_X, platform_Y=platformTracker(frame, HSV_frame)
         if platform_X is not None and platform_Y is not None:
             saved_platform_X=platform_X
             saved_platform_Y=platform_Y
 
-    key=cv.waitKey(1) & 0xFF
+    key=cv.waitKey(1)&0xFF
 
-    if key==ord('c'):
+    if key==ord('l'):
         platform_center_locked=True
-        print(f"Platform tracking locked at: X={saved_platform_X}, Y={saved_platform_Y}")
-
-    elif key==ord('u'):
+        print("Platform tracking locked")
+    elif key==ord('o'):
         platform_center_locked=False
         print("Platform center unlocked.")
 
+    print(f"Platform  center: X={saved_platform_X}, Y={saved_platform_Y}")
+    print("\n")
+    
+    mask_clean,ballCenter_X,ballCenter_Y,radius=ballTracker(frame,HSV_frame)
+    print(f"Ball  center: X={ballCenter_X}, Y={ballCenter_Y}")
+    print("\n")
 
     if ballCenter_X is not None and ballCenter_Y is not None and not sound_played: 
         threading.Thread(target=play_sound,daemon=True).start()
@@ -197,14 +196,16 @@ while True:
 
     if ballCenter_X is not None and saved_platform_X is not None:
         error_x=saved_platform_X- ballCenter_X 
-        print("Error X=",error_x)
+        print("Error X=",error_x,"\n")
         if abs(error_x)<5:
             output_x=0
-            print("X Dead Zone - No correction needed.")
+            print("X Dead Zone-No correction needed.")
         else:
-            output_x = pid_x.PIDcompute(error_x)
+            output_x=pid_x.PIDcompute(error_x)
+            print("pid x=",output_x)
 
         angle_x=mapPIDtoAngle(output_x)
+        print("angle x=",angle_x)
 
 
     if ballCenter_Y is not None and saved_platform_Y is not None:
@@ -212,55 +213,69 @@ while True:
         print("Error Y=",error_y)
         if abs(error_y) < 5:
             output_y = 0
-            print("Y Dead Zone - No correction needed.")
+            print("Y Dead Zone-No correction needed.")
         else:
             output_y = pid_y.PIDcompute(error_y)
+            print("pid y=",output_y)
 
         angle_y=mapPIDtoAngle(output_y)
+        print("angle y=",angle_y)
 
     mask_color=cv.cvtColor(mask_clean,cv.COLOR_GRAY2BGR)
     mergeframe=np.hstack((frame,mask_color))
-
-    cv.imshow("Ball Tracking",mergeframe)
+    cv.imshow("Tracking",mergeframe)
 
     # try:
     #     data=f"{angle_x},{angle_y}\n"
     #     arduino.write(data.encode())   
     #     response=arduino.readline().decode().strip()
-    #     print("Arduino: ",response)                          
+    #     print("position of servo x and servo y is: ",response)                          
     # except Exception as e:
     #     print("Error sending data:",e)   
    
     if key==ord('q'):
         break
-    elif key==ord('w'):  
-        pid_x.Kp += 0.01
-        pid_y.Kp += 0.01
-        print(f"Kp = {pid_x.Kp:.3f}")
-    elif key==ord('s'):  
-        pid_x.Kp = max(pid_x.Kp - 0.01, 0)
-        pid_y.Kp = pid_x.Kp
-        print(f"Kp = {pid_x.Kp:.3f}")
-    elif key==ord('e'):  
-        pid_x.Ki += 0.001
-        pid_y.Ki += 0.001
-        print(f"Ki = {pid_x.Ki:.4f}")
+    elif key==ord('w'):
+        pid_x.Kp+=0.01
+        print(f"Kp X={pid_x.Kp:.3f}")
+    elif key==ord('e'): 
+        pid_y.Kp+=0.01
+        print(f"Kp Y={pid_y.Kp:.3f}")
+    elif key==ord('s'): 
+        pid_x.Kp=max(pid_x.Kp-0.01,0)
+        print(f"Kp X={pid_x.Kp:.3f}")
     elif key==ord('d'):  
-        pid_x.Ki = max(pid_x.Ki - 0.001, 0)
-        pid_y.Ki = pid_x.Ki
-        print(f"Ki = {pid_x.Ki:.4f}")
-    elif key==ord('r'): 
-        pid_x.Kd += 0.01
-        pid_y.Kd += 0.01
-        print(f"Kd = {pid_x.Kd:.3f}")
+       pid_y.Kp=max(pid_y.Kp-0.01,0)
+       print(f"Kp Y={pid_y.Kp:.3f}")
+    elif key==ord('r'):  
+       pid_x.Ki+=0.001
+       print(f"Ki X={pid_x.Ki:.4f}")
+    elif key==ord('t'): 
+       pid_y.Ki+=0.001
+       print(f"Ki Y={pid_y.Ki:.4f}")
     elif key==ord('f'): 
-        pid_x.Kd = max(pid_x.Kd - 0.01, 0)
-        pid_y.Kd = pid_x.Kd
-        print(f"Kd = {pid_x.Kd:.3f}")
+       pid_x.Ki=max(pid_x.Ki-0.001,0)
+       print(f"Ki X={pid_x.Ki:.4f}")
+    elif key==ord('g'): 
+       pid_y.Ki=max(pid_y.Ki-0.001,0)
+       print(f"Ki Y={pid_y.Ki:.4f}")
+    elif key==ord('y'):  
+       pid_x.Kd+=0.01
+       print(f"Kd X={pid_x.Kd:.3f}")
+    elif key==ord('u'):  
+       pid_y.Kd+=0.01
+       print(f"Kd Y={pid_y.Kd:.3f}")
+    elif key==ord('h'):  
+       pid_x.Kd=max(pid_x.Kd-0.01,0)
+       print(f"Kd X={pid_x.Kd:.3f}")
+    elif key==ord('j'): 
+       pid_y.Kd=max(pid_y.Kd-0.01,0)
+       print(f"Kd Y={pid_y.Kd:.3f}")
     elif key==ord('p'): 
-        with open("pid_params.txt", "w") as file:
+        with open("pid_value.txt","w") as file:
             file.write(f"{pid_x.Kp},{pid_x.Ki},{pid_x.Kd}")
-        print("PID values saved to pid_params.txt ")
+            file.write(f"{pid_x.Kp},{pid_x.Ki},{pid_x.Kd}")
+        print("PID values saved to pid_value.txt")
 
 videoCapture.release()
 #arduino.close()
