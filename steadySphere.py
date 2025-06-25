@@ -8,7 +8,11 @@ from playsound import playsound
 sound_played=False
 
 def play_sound():
-    playsound("C:/Users/ASUS/steady-sphere/sound/sound.mp3")
+    try:
+        playsound("C:/Users/ASUS/steady-sphere/sound/sound.mp3")
+    except Exception as e:
+        print("Sound play error:",e)
+
 
 class PID:
     def __init__(self,Kp,Ki,Kd):
@@ -90,7 +94,7 @@ def ballTracker(frame,HSV_frame):
             if M["m00"]>0:
                 ballCenter_X=int(M["m10"]/M["m00"])
                 ballCenter_Y=int(M["m01"]/M["m00"])
-                if radius>10:
+                if radius is not None and radius>10:
                     cv.circle(frame,(int(ballCenter_X),int(ballCenter_Y)),int(radius),(0, 0, 255),4)
                     text_size,_=cv.getTextSize(f"X={int(ballCenter_X)}, Y={int(ballCenter_Y)}",cv.FONT_HERSHEY_SIMPLEX,0.6,2)
                     text_x=ballCenter_X+10
@@ -194,6 +198,7 @@ while True:
         threading.Thread(target=play_sound,daemon=True).start()
         sound_played = True
 
+
     if ballCenter_X is not None and saved_platform_X is not None:
         error_x=saved_platform_X- ballCenter_X 
         print("Error X=",error_x,"\n")
@@ -225,6 +230,8 @@ while True:
     mergeframe=np.hstack((frame,mask_color))
     cv.imshow("Tracking",mergeframe)
 
+
+    # if 'angle_x' in locals() and 'angle_y' in locals():
     # try:
     #     data=f"{angle_x},{angle_y}\n"
     #     arduino.write(data.encode())   
@@ -273,8 +280,8 @@ while True:
        print(f"Kd Y={pid_y.Kd:.3f}")
     elif key==ord('p'): 
         with open("pid_value.txt","w") as file:
-            file.write(f"{pid_x.Kp},{pid_x.Ki},{pid_x.Kd}")
-            file.write(f"{pid_x.Kp},{pid_x.Ki},{pid_x.Kd}")
+            file.write(f"{pid_x.Kp},{pid_x.Ki},{pid_x.Kd}\n")
+            file.write(f"{pid_y.Kp},{pid_y.Ki},{pid_y.Kd}\n")
         print("PID values saved to pid_value.txt")
 
 videoCapture.release()
