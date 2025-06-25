@@ -278,6 +278,14 @@ while True:
     elif key==ord('j'): 
        pid_y.Kd=max(pid_y.Kd-0.01,0)
        print(f"Kd Y={pid_y.Kd:.3f}")
+    elif key == ord('z'):
+       pid_x.Kp = 0
+       pid_x.Ki = 0
+       pid_x.Kd = 0
+       pid_y.Kp = 0
+       pid_y.Ki = 0
+       pid_y.Kd = 0
+       print("PID values reset to 0")
     elif key==ord('p'): 
         with open("pid_value.txt","w") as file:
             file.write(f"{pid_x.Kp},{pid_x.Ki},{pid_x.Kd}\n")
