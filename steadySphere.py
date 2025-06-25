@@ -174,9 +174,21 @@ while True:
     print("ballCenter Y=",ballCenter_Y)    
     print("Radius=",radius,"\n")
 
-    mask_clean_platform,platform_X,platform_Y=platformTracker(frame,HSV_frame)
-    print("platform X=",platform_X)    
-    print("platform Y=",platform_Y,"\n")
+    if not platform_center_locked:
+        mask_clean, platform_X, platform_Y=platformTracker(frame, HSV_frame)
+        if platform_X is not None and platform_Y is not None:
+            saved_platform_X=platform_X
+            saved_platform_Y=platform_Y
+
+    key=cv.waitKey(1) & 0xFF
+
+    if key==ord('c'):
+        platform_center_locked=True
+        print(f"Platform tracking locked at: X={saved_platform_X}, Y={saved_platform_Y}")
+
+    elif key==ord('u'):
+        platform_center_locked=False
+        print("Platform center unlocked.")
 
 
     if ballCenter_X is not None and ballCenter_Y is not None and not sound_played: 
@@ -219,8 +231,6 @@ while True:
     # except Exception as e:
     #     print("Error sending data:",e)   
    
-    key=cv.waitKey(1) & 0xFF
-
     if key==ord('q'):
         break
 
