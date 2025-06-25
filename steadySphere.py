@@ -5,10 +5,11 @@ import time
 from playsound import playsound
 import threading
 
+sound_played=False
 
-sound_played = False
 def play_sound():
     playsound("C:/Users/ASUS/steady-sphere/sound/sound.mp3")
+
 class PID:
     def __init__(self,Kp,Ki,Kd):
         self.Kp=Kp
@@ -29,8 +30,8 @@ class PID:
         self.previous_error=current_error
         return output
 
-# arduino=serial.Serial('COM8',9600)
-# time.sleep(2)
+#arduino=serial.Serial('COM8',9600)
+time.sleep(2)
 
 def getRangeHSV(BGR_color):
         BGR_color=np.uint8([[BGR_color]])
@@ -46,7 +47,7 @@ def getRangeHSV(BGR_color):
 
 
 yellow=[0,255,255]
-green=[0,255,0]#112,141,42
+green=[112,141,42]
 
 lower_yellow,upper_yellow=getRangeHSV(yellow)
 lower_green, upper_green =getRangeHSV(green)
@@ -61,7 +62,7 @@ print("Upper bound:", upper_green)
 
 videoCapture=cv.VideoCapture(0)
 
-def ballTracker(frame, HSV_frame):
+def ballTracker(frame,HSV_frame):
     ballCenter_X,ballCenter_Y=None,None
     mask=cv.inRange(HSV_frame,lower_yellow,upper_yellow)
     blurred=cv.bilateralFilter(mask,9,75,75)
@@ -87,9 +88,9 @@ def ballTracker(frame, HSV_frame):
             ((ballCenter_X,ballCenter_Y),radius)=cv.minEnclosingCircle(best_contour)
             M=cv.moments(best_contour)
             if M["m00"]>0:
-                ballCenter_X =int(M["m10"]/M["m00"])
+                ballCenter_X=int(M["m10"]/M["m00"])
                 ballCenter_Y=int(M["m01"]/M["m00"])
-                if radius > 10:
+                if radius>10:
                     cv.circle(frame,(int(ballCenter_X),int(ballCenter_Y)),int(radius),(0, 0, 255),4)
                     text_size,_=cv.getTextSize(f"X={int(ballCenter_X)}, Y={int(ballCenter_Y)}",cv.FONT_HERSHEY_SIMPLEX,0.6,2)
                     text_x=ballCenter_X+10
@@ -102,8 +103,8 @@ def ballTracker(frame, HSV_frame):
                     cv.line(frame,(0,ballCenter_Y),(frame.shape[1], ballCenter_Y),(0,128,255),2)
                     cv.circle(frame,(ballCenter_X,ballCenter_Y),5,(0,0,255),-1)
                
-                return mask_clean, ballCenter_X, ballCenter_Y,radius
-    return mask_clean, None, None,None    
+                return mask_clean,ballCenter_X,ballCenter_Y,radius
+    return mask_clean,None,None,None    
 
 def platformTracker(frame,HSV_frame):
     platform_X,platform_Y=None,None
@@ -140,20 +141,22 @@ def platformTracker(frame,HSV_frame):
                 cv.putText(frame, f"X={platform_X}, Y={platform_Y}",(text_x, text_y),cv.FONT_HERSHEY_SIMPLEX,0.6,(64,64,64),2)
                
                 return mask_clean, platform_X, platform_Y
-    return mask_clean, None, None
+    return mask_clean,None,None
     
 videoCapture.set(cv.CAP_PROP_FRAME_WIDTH,640)
 videoCapture.set(cv.CAP_PROP_FRAME_HEIGHT,480)
 
-pid_x=PID(Kp=0,Ki=0,Kd=0)
-pid_y=PID(Kp=0,Ki=0,Kd=0)
+pid_x = PID(Kp=0, Ki=0, Kd=0)
+pid_y = PID(Kp=0, Ki=0, Kd=0)
 
-
-def mapPIDtoPWM(output):
+def mapPIDtoAngle(output):
     output=max(min(output,100),-100)
-    pwm=1550+output*0.5
-    pwm=int(max(min(pwm,1575),1500))
-    return pwm
+    angle=90+output*0.9
+    return angle
+
+platform_center_locked=False
+saved_platform_X=None
+saved_platform_Y=None
 
 
 while True:
@@ -170,18 +173,18 @@ while True:
     print("ballCenter X=",ballCenter_X)    
     print("ballCenter Y=",ballCenter_Y)    
     print("Radius=",radius,"\n")
+
     mask_clean_platform,platform_X,platform_Y=platformTracker(frame,HSV_frame)
     print("platform X=",platform_X)    
     print("platform Y=",platform_Y,"\n")
+
 
     if ballCenter_X is not None and ballCenter_Y is not None and not sound_played: 
         threading.Thread(target=play_sound,daemon=True).start()
         sound_played = True
 
-
-
-    if ballCenter_X is not None and platform_X is not None:
-        error_x=platform_X- ballCenter_X 
+    if ballCenter_X is not None and saved_platform_X is not None:
+        error_x=saved_platform_X- ballCenter_X 
         print("Error X=",error_x)
         if abs(error_x)<5:
             output_x=0
@@ -189,11 +192,11 @@ while True:
         else:
             output_x = pid_x.PIDcompute(error_x)
 
-        pwm_x=mapPIDtoPWM(output_x)
+        angle_x=mapPIDtoAngle(output_x)
 
 
-    if ballCenter_Y is not None and platform_Y is not None:
-        error_y=platform_Y-ballCenter_Y
+    if ballCenter_Y is not None and saved_platform_Y is not None:
+        error_y=saved_platform_Y-ballCenter_Y
         print("Error Y=",error_y)
         if abs(error_y) < 5:
             output_y = 0
@@ -201,26 +204,26 @@ while True:
         else:
             output_y = pid_y.PIDcompute(error_y)
 
-        pwm_y=mapPIDtoPWM(output_y)
-
-
+        angle_y=mapPIDtoAngle(output_y)
 
     mask_color=cv.cvtColor(mask_clean,cv.COLOR_GRAY2BGR)
     mergeframe=np.hstack((frame,mask_color))
 
     cv.imshow("Ball Tracking",mergeframe)
 
-
     # try:
-    #     data=f"{ballCenter_X},{ballCenter_Y}\n"
+    #     data=f"{angle_x},{angle_y}\n"
     #     arduino.write(data.encode())   
     #     response=arduino.readline().decode().strip()
     #     print("Arduino: ",response)                          
     # except Exception as e:
     #     print("Error sending data:",e)   
-    if cv.waitKey(1)&0xFF==ord('q'):
+   
+    key=cv.waitKey(1) & 0xFF
+
+    if key==ord('q'):
         break
 
 videoCapture.release()
-# arduino.close()
+#arduino.close()
 cv.destroyAllWindows()
