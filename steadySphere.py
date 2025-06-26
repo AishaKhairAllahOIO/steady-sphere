@@ -64,7 +64,7 @@ print("\nGreen color HSV range:")
 print("Lower Green:",lower_green)
 print("Upper Green:",upper_green)
 
-videoCapture=cv.VideoCapture(0)
+videoCapture=cv.VideoCapture(1,cv.CAP_DSHOW)
 
 def ballTracker(frame,HSV_frame):
     ballCenter_X,ballCenter_Y=None,None
@@ -110,9 +110,9 @@ def ballTracker(frame,HSV_frame):
                 return mask_clean,ballCenter_X,ballCenter_Y,radius
     return mask_clean,None,None,None    
 
-def platformTracker(frame,HSV_frame):
+def platformTracker(frame,HSV_frame,lower_color,upper_color):
     platform_X,platform_Y=None,None
-    mask=cv.inRange(HSV_frame,lower_green,upper_green)
+    mask=cv.inRange(HSV_frame,lower_color,upper_color)
     blurred=cv.bilateralFilter(mask,9,75,75)
     kernel=cv.getStructuringElement(cv.MORPH_RECT,(7,7))
     mask_clean=cv.morphologyEx(blurred,cv.MORPH_OPEN,kernel)
@@ -173,7 +173,7 @@ while True:
     HSV_frame=cv.merge([h,s,v_eq])
 
     if not platform_center_locked:
-        mask_clean, platform_X, platform_Y=platformTracker(frame, HSV_frame)
+        mask_clean, platform_X, platform_Y=platformTracker(frame, HSV_frame,lower_green, upper_green )
         if platform_X is not None and platform_Y is not None:
             saved_platform_X=platform_X
             saved_platform_Y=platform_Y
