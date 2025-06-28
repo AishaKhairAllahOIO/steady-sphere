@@ -58,16 +58,17 @@ def order_points(pts):
     return rect
 cap = cv.VideoCapture(0)
 
-lower_blue = np.array([100, 100, 50])
-upper_blue = np.array([140, 255, 255])
+lower_black = np.array([0, 120, 120])
+upper_black = np.array([45, 135, 135])
+
 
 while True:
     ret, frame = cap.read()
     if not ret:
         break
     frame = cv.flip(frame,1)  
-    hsv = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
-    maze_img, corners, mask = find_maze_blue(frame, hsv, lower_blue, upper_blue)
+    hsv = cv.cvtColor(frame, cv.COLOR_BGR2LAB)
+    maze_img, corners, mask = find_maze_blue(frame, hsv, lower_black, upper_black)
 
     if maze_img is not None:
         cv.imshow("Cropped Maze", maze_img)
