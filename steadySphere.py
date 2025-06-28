@@ -66,23 +66,35 @@ class ColorTracker:
     def getRangeHSV(self,BGR_color):
         BGR_color=np.uint8([[BGR_color]])
         HSV_color=cv.cvtColor(BGR_color,cv.COLOR_BGR2HSV)
-
         lower_color=HSV_color[0][0][0]-10,100,100
         upper_color=HSV_color[0][0][0]+10,255,255
-
         lower_color=np.array(lower_color,np.uint8)
         upper_color=np.array(upper_color,np.uint8)
 
         return lower_color,upper_color
     
-    def track_ball_position(self,frame,HSV_frame,lower_color,upper_color):
-        ballCenter_X,ballCenter_Y=None,None
+    def prepareFrameForTrackingByHSV(self,frame):
+        frame=cv.flip(frame,1)
+        HSV_frame=cv.cvtColor(frame,cv.COLOR_BGR2HSV)
+        h,s,v=cv.split(HSV_frame)
+        v_eq=cv.equalizeHist(v)
+        HSV_frame=cv.merge([h,s,v_eq])
+
+        return frame,HSV_frame
+
+    def prepareFrameForContour(self,HSV_frame,lower_color,upper_color,MORPH_TYPE):
         mask=cv.inRange(HSV_frame,lower_color,upper_color)
         blurred=cv.bilateralFilter(mask,9,75,75)
-        kernel=cv.getStructuringElement(cv.MORPH_ELLIPSE,(7,7))
+        kernel=cv.getStructuringElement(MORPH_TYPE,(7,7))
         mask_clean=cv.morphologyEx(blurred,cv.MORPH_OPEN,kernel)
         mask_clean=cv.morphologyEx(mask_clean,cv.MORPH_CLOSE,kernel)
         contours, _=cv.findContours(mask_clean,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE)
+
+        return mask_clean,contours
+   
+    def track_ball_position(self,HSV_frame,lower_color,upper_color):
+        ballCenter_X,ballCenter_Y=None,None
+        mask_clean,contours=self.prepareFrameForContour(HSV_frame,lower_color,upper_color,cv.MORPH_ELLIPSE)
 
         if contours:
             best_contour=None
@@ -120,15 +132,10 @@ class ColorTracker:
         return mask_clean,None,None 
 
         
-    def track_rectangle_position(self,frame,HSV_frame,lower_color,upper_color):
+    def track_rectangle_position(self,HSV_frame,lower_color,upper_color):
         platform_X,platform_Y=None,None
-        mask=cv.inRange(HSV_frame,lower_color,upper_color)
-        blurred=cv.bilateralFilter(mask,9,75,75)
-        kernel=cv.getStructuringElement(cv.MORPH_RECT,(7,7))
-        mask_clean=cv.morphologyEx(blurred,cv.MORPH_OPEN,kernel)
-        mask_clean=cv.morphologyEx(mask_clean,cv.MORPH_CLOSE,kernel)
-        contours,_=cv.findContours(mask_clean,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE)
-
+        mask_clean,contours=self.prepareFrameForContour(HSV_frame,lower_color,upper_color,cv.MORPH_RECT)
+        
         if contours:
             best_contour=max(contours,key=cv.contourArea)
             area=cv.contourArea(best_contour)
@@ -150,7 +157,7 @@ class ColorTracker:
                     cv.rectangle(frame,(text_x-5,text_y-text_size[1]-5),(text_x+text_size[0]+5,text_y+5),(192,192,192),-1)
                     cv.putText(frame, f"X={platform_X}, Y={platform_Y}",(text_x, text_y),cv.FONT_HERSHEY_SIMPLEX,0.6,(64,64,64),2)
                 
-                    return mask_clean, platform_X, platform_Y
+                    return mask_clean,platform_X, platform_Y
         return mask_clean,None,None
     
 
@@ -173,15 +180,11 @@ class PID:
         output=self.Kp*current_error+self.Ki*self.integral+self.Kd*derivative
         self.previous_error=current_error
         return output
-    
-    def reset(self):
-        self.Kp=self.Ki=self.Kd=0
-        self.integral=self.previous_error=0
-        self.last_time=time.time()
+
 
 class GimbalController:
-    def __init__(self,pid_controller):
-        self.pid=pid_controller
+    def __init__(self,pid):
+        self.pid=pid
 
     def mapPIDtoAngle(self,PIDoutput,pid_min,pid_max,angle_min,angle_max):
         PIDoutput=max(min(PIDoutput,pid_max),pid_min)
@@ -189,6 +192,8 @@ class GimbalController:
         b=angle_min-m*pid_min
         angle=m*PIDoutput+b
         return angle
+    
+
 
 #arduino=ArduinoComm('COM8',9600)   
 #arduino.connect()     
@@ -229,14 +234,10 @@ while True:
     ret,frame=videoCapture.read()
     if not ret:
         break
-    frame=cv.flip(frame,1)
-    HSV_frame=cv.cvtColor(frame,cv.COLOR_BGR2HSV)
-    h,s,v=cv.split(HSV_frame)
-    v_eq=cv.equalizeHist(v)
-    HSV_frame=cv.merge([h,s,v_eq])
+    frame,HSV_frame=colorTracker.prepareFrameForTrackingByHSV(frame)
 
     if not platform_center_locked:
-        mask_clean, platform_X, platform_Y=colorTracker.track_rectangle_position(frame, HSV_frame,lower_green,upper_green )
+        mask_clean,platform_X,platform_Y=colorTracker.track_rectangle_position(HSV_frame,lower_green,upper_green )
         if platform_X is not None and platform_Y is not None:
             saved_platform_X=platform_X
             saved_platform_Y=platform_Y
@@ -253,13 +254,12 @@ while True:
     print(f"Platform  center: X={saved_platform_X}, Y={saved_platform_Y}")
     print("\n")
     
-    mask_clean,ballCenter_X,ballCenter_Y=colorTracker.track_ball_position(frame,HSV_frame,lower_yellow,upper_yellow)
+    mask_clean,ballCenter_X,ballCenter_Y=colorTracker.track_ball_position(HSV_frame,lower_yellow,upper_yellow)
     print(f"Ball  center: X={ballCenter_X}, Y={ballCenter_Y}")
     print("\n")
 
     if ballCenter_X is not None and ballCenter_Y is not None: 
         sound.try_play()
-
 
     if ballCenter_X is not None and saved_platform_X is not None:
         error_x=saved_platform_X- ballCenter_X 
@@ -273,7 +273,6 @@ while True:
 
         angle_x=gimbalController_x.mapPIDtoAngle(output_x,-100,100,0,180)
         print("angle x=",angle_x)
-
 
     if ballCenter_Y is not None and saved_platform_Y is not None:
         error_y=saved_platform_Y-ballCenter_Y
