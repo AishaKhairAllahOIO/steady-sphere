@@ -21,6 +21,43 @@ class SoundManager:
             threading.Thread(target=self.play_sound,daemon=True).start()
             self.sound_played=True
 
+class ArduinoComm:
+    def __init__(self,port='COM8',baudrate=9600):
+        self.port=port
+        self.baudrate=baudrate
+        self.arduino=None
+        self.connect()
+
+    def connect(self):
+        try:
+            self.arduino=serial.Serial(self.port,self.baudrate)
+            time.sleep(2) 
+            print(f" Connected to Arduino on {self.port}")
+        except Exception as e:
+            print(f"Failed to connect to Arduino on {self.port}: {e}")
+            self.arduino=None
+
+    def is_connected(self):
+        return self.arduino is not None and self.arduino.is_open
+
+    def send_angles(self,angle_x,angle_y):
+        if not self.is_connected():
+            print("Arduino not connected.")
+            return
+        try:
+            data = f"{angle_x},{angle_y}\n"
+            self.arduino.write(data.encode())
+            response=self.arduino.readline().decode().strip()
+            if response:
+                print(f"Arduino response: {response}")
+            return response
+        except Exception as e:
+            print(f"Failed to send data to Arduino: {e}")
+
+    def close(self):
+        if self.is_connected():
+            self.arduino.close()
+            print("Arduino connection closed.")
 
 class ColorTracker:
     def __init__(self):
@@ -153,9 +190,8 @@ class GimbalController:
         angle=m*PIDoutput+b
         return angle
 
-        
-#arduino=serial.Serial('COM8',9600)
-#time.sleep(2)
+#arduino=ArduinoComm('COM8',9600)   
+#arduino.connect()     
 
 yellow=[0,255,255]
 green=[112,141,42]
@@ -258,14 +294,8 @@ while True:
 
 
     # if 'angle_x' in locals() and 'angle_y' in locals():
-    # try:
-    #     data=f"{angle_x},{angle_y}\n"
-    #     arduino.write(data.encode())   
-    #     response=arduino.readline().decode().strip()
-    #     print("position of servo x and servo y is: ",response)                          
-    # except Exception as e:
-    #     print("Error sending data:",e)   
-   
+    #arduino.send_angles(angle_x,angle_y)
+  
     if key==ord('q'):
         break
     elif key==ord('w'):
